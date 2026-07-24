@@ -59,7 +59,7 @@ class _AjoutCategoriePageState extends State<AjoutCategoriePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       backgroundColor: Colors.pink,
+       backgroundColor: StyleApplication.backgroundcolorPage,
       appBar: AppBar(
         title: const Text(
           "Ajouter une catégorie",

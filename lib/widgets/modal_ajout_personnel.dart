@@ -63,7 +63,7 @@ class _FormulairePersonnelState extends State<FormulairePersonnel> {
         ),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          value: widget.selectedRole,
+          initialValue: widget.selectedRole,
           items: _roles.map((role) {
             return DropdownMenuItem(
               value: role,

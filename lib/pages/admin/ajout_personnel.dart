@@ -108,7 +108,7 @@ class _AjoutPersonnelPageState extends State<AjoutPersonnelPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink,
+      backgroundColor: StyleApplication.backgroundcolorPage,
       appBar: AppBar(
         title: const Text(
           "Ajouter un personnel",
@@ -151,11 +151,13 @@ class _AjoutPersonnelPageState extends State<AjoutPersonnelPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              iconEnabledColor: Colors.white,
+              dropdownColor: Colors.pink,
               initialValue: _selectedRole,
               items: _roles.map((role) {
                 return DropdownMenuItem(
                   value: role,
-                  child: Text(role.toLowerCase()),
+                  child: Text(role.toLowerCase(), style: StyleApplication.taillTextSimple,),
                 );
               }).toList(),
               onChanged: (value) {
@@ -168,6 +170,12 @@ class _AjoutPersonnelPageState extends State<AjoutPersonnelPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white, width: 2)
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white, width: 2)
+                )
               ),
             ),
             const SizedBox(height: 20),

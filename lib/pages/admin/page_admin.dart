@@ -5,6 +5,7 @@ import 'package:pili_pili/pages/admin/ajout_categorie.dart';
 import 'package:pili_pili/pages/admin/ajout_personnel.dart';
 import 'package:pili_pili/pages/admin/ajout_produit.dart';
 import 'package:pili_pili/pages/admin/ajout_table.dart';
+import 'package:pili_pili/pages/admin/gestion_affectations.dart';
 import 'package:pili_pili/services/database_manager.dart';
 import 'package:pili_pili/widgets/widget_page_admin_card.dart';
 import 'package:pili_pili/style/style.dart';
@@ -212,16 +213,23 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           width: (MediaQuery.of(context).size.width - 20) / 5,
                         child: StatCard(
                           label: "Attribuer Table",  
-                          icon: Icons.table_bar,
+                          icon: Icons.swap_horiz,
                           showValue: false,
-                          onTap: (){},
+                          onTap: (){
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(
+                                builder: (context) => const GestionAffectations(),
+                                )
+                              );
+                          },
                           )
                         ),
                            SizedBox(
                           width: (MediaQuery.of(context).size.width - 20) / 5,
                         child: StatCard(
-                          label: "supprimer personnel",  
-                          icon: Icons.delete_forever,
+                          label: "Voir personnel",  
+                          icon: Icons.visibility,
                           showValue: false,
                           onTap: (){},
                           )

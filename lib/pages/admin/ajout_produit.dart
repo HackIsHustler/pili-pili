@@ -19,7 +19,6 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _prixController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
 
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -35,59 +34,59 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
     _chargerCategories();
   }
 
-  // Future<void> _pickerImage() async {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20))
-  //     ),
-  //     builder: (context) {
-  //       return SafeArea(
-  //         child: Wrap(
-  //           children: [
-  //             ListTile(
-  //               leading: const Icon(Icons.camera_alt, color: Colors.pink,),
-  //               title: const Text("Prendre une Photo"),
-  //               onTap: () async {
-  //                 Navigator.pop(context);
-  //                  final XFile? image = await _picker.pickImage(
-  //                   source: ImageSource.camera,
-  //                   maxWidth: 800,
-  //                   maxHeight: 800,
-  //                   imageQuality: 80,
-  //                   );
-  //                     if (image != null){
-  //                     setState(() {
-  //                       _imageFile = File(image.path);
-  //                     });
-  //                   }
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.photo_library, color: Colors.pink),
-  //               title: const Text("Prendre dans Galerie"),
-  //               onTap: () async {
-  //                 Navigator.pop(context);
-  //                 final XFile? image = await _picker.pickImage(
-  //                   source: ImageSource.gallery,
-  //                   maxWidth: 800,
-  //                   maxHeight: 800,
-  //                   imageQuality: 80,
-  //                   );
-  //                     if (image != null){
-  //                           setState(() {
-  //                       _imageFile = File(image.path);
-  //                     });
-  //                     }
-  //               },
-  //             )
-  //           ],
-  //         )
-  //         );
-  //     }
-  //     );
+  Future<void> _pickerImage() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.pink,),
+                title: const Text("Prendre une Photo"),
+                onTap: () async {
+                  Navigator.pop(context);
+                   final XFile? image = await _picker.pickImage(
+                    source: ImageSource.camera,
+                    maxWidth: 800,
+                    maxHeight: 800,
+                    imageQuality: 80,
+                    );
+                      if (image != null){
+                      setState(() {
+                        _imageFile = File(image.path);
+                      });
+                    }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.pink),
+                title: const Text("Prendre dans Galerie"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: 800,
+                    maxHeight: 800,
+                    imageQuality: 80,
+                    );
+                      if (image != null){
+                            setState(() {
+                        _imageFile = File(image.path);
+                      });
+                      }
+                },
+              )
+            ],
+          )
+          );
+      }
+      );
     
-  // }
+  }
 
   Future<void> _chargerCategories() async {
     try {
@@ -111,9 +110,9 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
     final nom = _nomController.text.trim();
     final description = _descriptionController.text.trim();
     final prixText = _prixController.text.trim();
-    final imageUrl = _imageUrlController.text.trim();
 
-    if (nom.isEmpty || prixText.isEmpty || _categorieId == null || imageUrl.isEmpty) {
+
+    if (nom.isEmpty || prixText.isEmpty || _categorieId == null) {
       SnackBarHelper.warning(context, "Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -167,12 +166,17 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
         setState(() => _isSubmitting = false);
       }
     }
+  final produits = await DatabaseManager.getAllProduits();
+    for (var p in produits) {
+      print('ID: ${p.id}, Nom: ${p.nom}, Image: ${p.imageUrl}');
+}
+
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink,
+      backgroundColor: StyleApplication.backgroundcolorPage,
       appBar: AppBar(
         title: const Text(
           "Ajouter un produit",
@@ -207,6 +211,7 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
               _categories.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : DropdownButtonFormField<int>(
+                    iconEnabledColor: Colors.white,
                       initialValue: _categorieId,
                       items: _categories.map((categorie) {
                         return DropdownMenuItem(
@@ -219,6 +224,8 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
                           _categorieId = value;
                         });
                       },
+                      dropdownColor: Colors.pink,
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         hintText: "Catégorie",
                         border: OutlineInputBorder(
@@ -231,7 +238,7 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.pink, width: 2),
+                          borderSide: const BorderSide(color: Colors.white, width: 2),
                         ),
                       ),
                     ),
@@ -254,7 +261,7 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
               ),
               const SizedBox(height: 8,),
                          GestureDetector(
-              onTap: (){},//_pickerImage,
+              onTap: _pickerImage,
               child: Container(
                 height: 150,
                 width: double.infinity,
@@ -321,7 +328,6 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
     _nomController.dispose();
     _descriptionController.dispose();
     _prixController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
   }
 }

@@ -85,7 +85,7 @@ class _AjoutTablePageState extends State<AjoutTablePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink,
+      backgroundColor: StyleApplication.backgroundcolorPage,
       appBar: AppBar(
         title: const Text(
           "Ajouter une table",
@@ -112,6 +112,7 @@ class _AjoutTablePageState extends State<AjoutTablePage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              iconEnabledColor: Colors.white,
               initialValue: _statut,
               items: _statuts.map((statut) {
                 return DropdownMenuItem(
@@ -124,21 +125,21 @@ class _AjoutTablePageState extends State<AjoutTablePage> {
                   _statut = value!;
                 });
               },
-              dropdownColor: Colors.white,
+              dropdownColor: Colors.pink,
               style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: "Statut",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.pink, width: 2),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.pink, width: 2),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.pink, width: 2),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),

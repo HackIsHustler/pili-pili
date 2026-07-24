@@ -281,18 +281,18 @@ static Future<String?> getRoleByUtilisateurId(int utilisateurId) async {
 //recuperer tous les personnels avec leurs informations utilisateur
 static Future<List<Map<String, dynamic>>> getAllPersonnelsWithUsers() async {
   final db = await initDb();
-  return await db.query('''
-SELECT
-p.*,
-u.nom,
-u.prenom,
-u.email,
-u.telephone
-FROM personnels p
-INNER JOIN utilisateurs u ON p.utilisateurId = u.id
-ORDER BY p.created_at DESC
-''');
-}
+  return await db.rawQuery('''
+    SELECT
+    p.*,
+    u.nom,
+    u.prenom,
+    u.email,
+    u.telephone
+    FROM personnels p
+    INNER JOIN utilisateurs u ON p.utilisateurId = u.id
+    ORDER BY p.created_at DESC
+    ''');
+    }
 
 //desactiver un personnels
 static Future<int> desactiverPersonnel(int id) async {
@@ -423,6 +423,17 @@ static Future<int> countCategories() async {
     whereArgs: [table.id],
     );
  }
+
+ // Mettre à jour le statut d'une table
+static Future<int> updateStatutTable(int tableId, String statut) async {
+  final db = await initDb();
+  return await db.update(
+    'tables',
+    {'statut': statut},
+    where: 'id = ?',
+    whereArgs: [tableId],
+  );
+}
 
  //supprimer une table
  static Future<int> deleteTable(int id) async {

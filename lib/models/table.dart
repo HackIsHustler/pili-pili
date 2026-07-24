@@ -15,6 +15,7 @@ class TableRestaurant{
 
   factory TableRestaurant.fromMap(Map<String, dynamic> map){
     return TableRestaurant(
+      id: map['id'],
       numero: map['numero'], 
       capacite: map['capacite'], 
       statut: map['statut'], 

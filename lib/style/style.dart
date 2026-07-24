@@ -10,6 +10,9 @@ class StyleApplication{
   //couleur des icones dans une pages
   static const coloriconInPage = Colors.pink;
 
+  //couleur de l'arriere plan des pages
+  static const Color backgroundcolorPage = Colors.pink;
+
   //le titre de l'application
   static const titre = TextStyle(
     fontSize: 25.0,
