@@ -7,4 +7,5 @@ class AppRoutes {
   static const profil = "/profil";
   static const loginRegister = "/connectregistre";
   static const admin = "/dashboard";
+  static const utilisateur = "/utilisateur";
 }

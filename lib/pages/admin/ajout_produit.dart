@@ -166,10 +166,6 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
         setState(() => _isSubmitting = false);
       }
     }
-  final produits = await DatabaseManager.getAllProduits();
-    for (var p in produits) {
-      print('ID: ${p.id}, Nom: ${p.nom}, Image: ${p.imageUrl}');
-}
 
   }
 
@@ -312,7 +308,7 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
                         )
                       : const Text(
                           "Ajouter",
-                          style: TextStyle(color: Colors.pink),
+                          style: StyleApplication.textSurLeBouton,
                         ),
                 ),
               ),

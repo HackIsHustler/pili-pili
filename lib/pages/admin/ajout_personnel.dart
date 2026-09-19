@@ -198,7 +198,7 @@ class _AjoutPersonnelPageState extends State<AjoutPersonnelPage> {
                       )
                     : const Text(
                         "Ajouter",
-                        style: TextStyle(color: Colors.black),
+                        style: StyleApplication.textSurLeBouton,
                       ),
               ),
             ),

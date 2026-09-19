@@ -68,7 +68,6 @@ class _LoginRegisterPageState extends State<LoginRegisterPage> {
 
       //verifie si lutilisateur est un utilisateur
       final role = await DatabaseManager.getRoleByUtilisateurId(user.id!);
-      print('role: $role');
 
       //si c'est un personnel stocker le role en session
       if (role != null){

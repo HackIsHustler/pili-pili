@@ -231,7 +231,7 @@ class DatabaseManager {
   static Future<int> updateUtilisateur(Utilisateur utilisateur) async {
     final db = await initDb();
     return db.update(
-      'utilisatuers',
+      'utilisateurs',
        utilisateur.toMap(),
        where: 'id = ?',
        whereArgs: [utilisateur.id],
@@ -278,6 +278,17 @@ static Future<String?> getRoleByUtilisateurId(int utilisateurId) async {
   return null; // L'utilisateur n'est pas un personnel
 }
 
+static Future<bool> emailExisteChezAutreUtilisateur(String email, int utilisateurId) async {
+  final db = await initDb();
+  final result = await db.query(
+    'utilisateurs',
+    where: 'email = ? and id != ?',
+    whereArgs: [email.toLowerCase(), utilisateurId],
+    limit: 1,
+  );
+  return result.isNotEmpty;
+}
+
 //recuperer tous les personnels avec leurs informations utilisateur
 static Future<List<Map<String, dynamic>>> getAllPersonnelsWithUsers() async {
   final db = await initDb();
@@ -294,15 +305,26 @@ static Future<List<Map<String, dynamic>>> getAllPersonnelsWithUsers() async {
     ''');
     }
 
-//desactiver un personnels
-static Future<int> desactiverPersonnel(int id) async {
+//desactiver ou activer un personnels
+static Future<int> updateStatutPersonnel(int id, bool actif) async {
   final db = await initDb();
   return await db.update(
     'personnels',
-    {'actif': 0},
+    {'actif': actif ? 1 : 0},
      where: 'id = ?',
      whereArgs: [id]
      );
+}
+
+//mettre a jour le role d'un personnel
+static Future<int> updateRolePersonnel (int id, String role) async {
+  final db = await initDb();
+  return await db.update(
+    'personnels', 
+    {'role': role},
+    where: 'id = ?',
+    whereArgs: [id],
+    );
 }
 
 //recuperer un personnel par utilisateur
@@ -834,6 +856,21 @@ static Future<List<Map<String, dynamic>>> getProduitsDetailsByCommande(int comma
     INNER JOIN produits p ON cp.produitId = p.id
     WHERE cp.commandeId = ?
   ''', [commandeId]);
+}
+
+// Récupérer les produits triés par nombre de likes (du plus populaire au moins populaire)
+static Future<List<Produit>> getProduitsParPopularite() async {
+  final db = await initDb();
+  final maps = await db.rawQuery('''
+    SELECT
+      p.*,
+      COUNT(pl.id) as nombreLikes
+    FROM produits p
+    LEFT JOIN produits_likes pl ON pl.produitId = p.id
+    GROUP BY p.id
+    ORDER BY nombreLikes DESC
+  ''');
+  return maps.map((map) => Produit.fromMap(map)).toList();
 }
 
 //  CRUD pour affectations_tables

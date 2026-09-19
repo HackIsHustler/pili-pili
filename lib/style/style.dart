@@ -37,4 +37,10 @@ class StyleApplication{
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
+
+  static const textSurLeBouton = TextStyle(
+    color: Color(0xff1f48ff),
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  );
 }

@@ -176,6 +176,9 @@ class _PageProfilState extends State<PageProfil> {
           items.add(ProfilItem(
             icon: Icons.people,
             label: 'Gérer les utilisateurs',
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.utilisateur);
+            },
           ));
           items.add(ProfilItem(
             icon: Icons.restaurant_menu,
@@ -228,15 +231,6 @@ class _PageProfilState extends State<PageProfil> {
             icon: Icons.shopping_bag_outlined,
             label: 'Mes commandes',
           ));
-
-          //je veux enlever apres
-          items.add(ProfilItem(
-            icon: Icons.dashboard, 
-            label: "dashbord",
-            onTap: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.admin);
-            },
-            ));
           items.add(ProfilItem(
             icon: Icons.favorite_outline,
             label: 'Mes favoris',

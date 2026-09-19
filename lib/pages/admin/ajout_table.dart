@@ -164,7 +164,7 @@ class _AjoutTablePageState extends State<AjoutTablePage> {
                       )
                     : const Text(
                         "Ajouter",
-                        style: TextStyle(color: Colors.pink),
+                        style: StyleApplication.textSurLeBouton,
                       ),
               ),
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pili_pili/pages/admin/gestion_utilisateurs.dart';
 import 'package:pili_pili/pages/auth/login_register.dart';
 import 'package:pili_pili/services/database_manager.dart';
-import 'package:pili_pili/services/session_manager.dart';
 import 'package:pili_pili/pages/admin/page_admin.dart';
 import './widgets/widgets_page_accueil.dart';
 import 'pages/ma_page_accueil.dart';
@@ -29,6 +29,8 @@ void main() async {
     print("👤 Nombre d'utilisateurs : ${users.first['count']}");
       final perso = await db.rawQuery('SELECT COUNT(*) as count FROM personnels');
     print("👤 Nombre personnels : ${perso.first['count']}");
+    final prod = await db.rawQuery('SELECT COUNT(*) as count FROM produits');
+    print("👤 Nombre personnels : ${prod.first['count']}");
     
   } catch (e) {
     print(" Erreur: $e");
@@ -53,6 +55,7 @@ class MonAppli extends StatelessWidget{
         AppRoutes.profil: (context) => const PageProfil(),
         AppRoutes.loginRegister: (context) => const LoginRegisterPage(),
         AppRoutes.admin:(context) => const DashboardAdmin(),
+        AppRoutes.utilisateur:(context) => const ListeUtilisateurs(),
       },
     );
   }

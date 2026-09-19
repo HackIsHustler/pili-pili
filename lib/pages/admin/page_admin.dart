@@ -1,13 +1,17 @@
-// pages/admin/dashboard_admin.dart
 import 'package:flutter/material.dart';
-import 'package:pili_pili/models/categorie.dart';
 import 'package:pili_pili/pages/admin/ajout_categorie.dart';
 import 'package:pili_pili/pages/admin/ajout_personnel.dart';
 import 'package:pili_pili/pages/admin/ajout_produit.dart';
 import 'package:pili_pili/pages/admin/ajout_table.dart';
 import 'package:pili_pili/pages/admin/gestion_affectations.dart';
+import 'package:pili_pili/pages/admin/gestion_personnels.dart';
 import 'package:pili_pili/services/database_manager.dart';
+import 'package:pili_pili/services/session_manager.dart';
+import 'package:pili_pili/routes/app_routes.dart';
+import 'package:pili_pili/utils/transition_page.dart';
+import 'package:pili_pili/widgets/widget_confirmation_dialogue.dart';
 import 'package:pili_pili/widgets/widget_page_admin_card.dart';
+import 'package:pili_pili/pages/admin/gestion_table_et_categorie.dart';
 import 'package:pili_pili/style/style.dart';
 
 class DashboardAdmin extends StatefulWidget {
@@ -72,7 +76,19 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () {
-              // Déconnexion
+              ConfirmationDialogue.show(
+                context, 
+                title: "Deconnexion", 
+                message: "Voulez vous vraiment vous deconnecter?",
+                confirmText: "Se Deconncter",
+                canceltext: "Annuler",
+                onConfirm: () async{
+                  await SessionManager.endSession();
+                  if (context.mounted){
+                    Navigator.pushReplacementNamed(context, AppRoutes.accueil);
+                  }
+                },
+                );
             },
           ),
         ],
@@ -137,9 +153,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           onTap: (){
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => AjoutPersonnelPage(),
-                                )
+                              slideRoute(const AjoutPersonnelPage()),
                                ).then((result) {
                                 if (result == true){
                                   _chargerStats();
@@ -157,9 +171,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           onTap: (){
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const AjoutCategoriePage(),
-                                )
+                              slideRoute(const  AjoutCategoriePage())
                               ).then((result){
                                 if (result == true){
                                   _chargerStats();
@@ -176,10 +188,8 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           showValue: false,
                           onTap: (){
                             Navigator.push(
-                              context, 
-                              MaterialPageRoute(
-                                builder: (context) => const AjoutTablePage(),
-                                )
+                              context,
+                              slideRoute(const AjoutTablePage())
                               ).then((result) {
                                 if (result == true){
                                   _chargerStats();
@@ -197,9 +207,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           onTap: (){
                             Navigator.push(
                               context, 
-                              MaterialPageRoute(
-                                builder: (context) => const AjoutProduitPage(),
-                                ),
+                              slideRoute(const AjoutProduitPage()),
                               ).then((result) {
                                 if (result == true) {
                                   _chargerStats();
@@ -218,9 +226,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           onTap: (){
                             Navigator.push(
                               context, 
-                              MaterialPageRoute(
-                                builder: (context) => const GestionAffectations(),
-                                )
+                              slideRoute(const GestionAffectations()),
                               );
                           },
                           )
@@ -231,7 +237,27 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                           label: "Voir personnel",  
                           icon: Icons.visibility,
                           showValue: false,
-                          onTap: (){},
+                          onTap: (){
+                            Navigator.push(
+                              context, 
+                              slideRoute(const GestionPersonnels())
+                              );
+                          },
+                          )
+                        ),
+
+                           SizedBox(
+                          width: (MediaQuery.of(context).size.width - 20) / 5,
+                        child: StatCard(
+                          label: "Gestion",  
+                          icon: Icons.build,
+                          showValue: false,
+                          onTap: (){
+                            Navigator.push(
+                              context, 
+                              slideRoute(const GestionTablesCategories())
+                              );
+                          },
                           )
                         ),
                     ],
@@ -242,7 +268,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                 children: [
                   Row(
                     children: [
-                      // ✅ Carte 1
+                      //  Carte 1
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

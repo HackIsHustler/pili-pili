@@ -1,19 +1,24 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class FavorisItem extends StatelessWidget {
   final String nom;
   final int prix;
   final int likes;
+  final String imageUrl;
 
   const FavorisItem({
     super.key,
     required this.nom,
     required this.prix,
     required this.likes,
+    required this.imageUrl
   });
 
   @override
   Widget build(BuildContext context) {
+    final file = File(imageUrl);
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12.0),
@@ -28,7 +33,11 @@ class FavorisItem extends StatelessWidget {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.image, color: Colors.grey),
+          child: ClipRRect(
+            child:  file.existsSync()
+          ? Image.file(file, fit: BoxFit.cover) 
+          : const Icon(Icons.image, color: Colors.grey),
+          )
         ),
         title: Text(
           nom,

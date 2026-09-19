@@ -1,7 +1,9 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+ import 'package:uuid/uuid.dart';
 
 class SessionManager {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const String _keyDeviceId = 'device_id';
 
   // Clés
   static const String _keyUserId = 'user_id';
@@ -93,5 +95,15 @@ class SessionManager {
   static Future<void> clearAll() async {
     await _storage.deleteAll();
   }
+
+// Récupère le deviceId existant, ou en génère un et le stocke définitivement
+static Future<String> getOrCreateDeviceId() async {
+  String? deviceId = await _storage.read(key: _keyDeviceId);
+  if (deviceId == null) {
+    deviceId = const Uuid().v4();
+    await _storage.write(key: _keyDeviceId, value: deviceId);
+  }
+  return deviceId;
+}
 
 }
