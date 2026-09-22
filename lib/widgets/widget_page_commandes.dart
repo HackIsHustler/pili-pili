@@ -19,11 +19,13 @@ class CommandeItem extends StatelessWidget {
 
   Color _getStatutColor() {
     switch (statut.toLowerCase()) {
-      case 'livrée':
+      case 'livre':
         return Colors.green;
-      case 'en cours':
+      case 'en_preparation':
+        return Colors.blue;
+      case 'en_attente':
         return Colors.orange;
-      case 'annulée':
+      case 'annule':
         return Colors.red;
       default:
         return Colors.grey;

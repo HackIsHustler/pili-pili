@@ -1,62 +1,40 @@
-
 import 'package:flutter/material.dart';
-import 'package:pili_pili/models/produit.dart';
-import 'package:pili_pili/services/database_manager.dart';
+import 'package:provider/provider.dart';
+import 'package:pili_pili/providers/produit_provider.dart';
 import 'package:pili_pili/widgets/zone_de_message.dart';
 import 'package:pili_pili/widgets/widgets_page_favoris.dart';
 import 'package:pili_pili/style/style.dart';
 
-class PageFavoris extends StatefulWidget {
+class PageFavoris extends StatelessWidget {
   const PageFavoris({super.key});
 
   @override
-  State<PageFavoris> createState() => _PageFavorisState();
-}
-
-class _PageFavorisState extends State<PageFavoris> {
-  List<Produit> _produits = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _chargerProduits();
-  }
-
-  Future<void> _chargerProduits() async {
-    setState(() => _isLoading = true);
-    try {
-      _produits = await DatabaseManager.getProduitsParPopularite();
-      setState(() => _isLoading = false);
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        SnackBarHelper.error(context, "Erreur: $e");
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final produitProvider = context.watch<ProduitProvider>();
+
+    if (produitProvider.erreur != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        SnackBarHelper.error(context, produitProvider.erreur!);
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Les plus aimés",
-          style: StyleApplication.titre,),
+        title: const Text("Les plus aimés", style: StyleApplication.titre),
         backgroundColor: Colors.pink,
         centerTitle: true,
       ),
-      body: _isLoading
+      body: produitProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _chargerProduits,
-              child: _produits.isEmpty
+              onRefresh: () => context.read<ProduitProvider>().chargerProduits(),
+              child: produitProvider.produits.isEmpty
                   ? const Center(child: Text("Aucun produit trouvé"))
                   : ListView.builder(
                       padding: const EdgeInsets.all(16.0),
-                      itemCount: _produits.length,
+                      itemCount: produitProvider.produits.length,
                       itemBuilder: (context, index) {
-                        final produit = _produits[index];
+                        final produit = produitProvider.produits[index];
                         return FavorisItem(
                           nom: produit.nom,
                           prix: produit.prix.toInt(),

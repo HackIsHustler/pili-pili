@@ -366,7 +366,7 @@ class _GestionPersonnelsState extends State<GestionPersonnels> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Liste des personnels",
-                        style: StyleApplication.sousTitre,
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -375,7 +375,7 @@ class _GestionPersonnelsState extends State<GestionPersonnels> {
                     Expanded(
                       child: _personnels.isEmpty
                           ? const Center(
-                              child: Text("Aucun personnel enregistré"),
+                              child: Text("Aucun personnel enregistré", style: TextStyle(fontSize: 20, color: Colors.white)),
                             )
                           : ListView.builder(
                               itemCount: _personnels.length,

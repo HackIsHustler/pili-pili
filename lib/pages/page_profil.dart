@@ -243,6 +243,13 @@ class _PageProfilState extends State<PageProfil> {
             icon: Icons.payment_outlined,
             label: 'Moyens de paiement',
           ));
+            items.add(ProfilItem(
+            icon: Icons.dashboard,
+            label: 'Dashboard Admin',
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.admin);
+            },
+          ));
           break;
       }
     } else {

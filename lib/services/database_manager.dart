@@ -108,11 +108,13 @@ class DatabaseManager {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         numeroCommande TEXT UNIQUE NOT NULL,
         utilisateurId INTEGER,
+        deviceId TEXT,
         tableId INTEGER,
         type TEXT NOT NULL,
         statut TEXT NOT NULL,
         total REAL NOT NULL DEFAULT 0,
         adresseLivraison TEXT,
+        modePaiement TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(id) ON DELETE SET NULL,
         FOREIGN KEY (tableId) REFERENCES tables(id) ON DELETE SET NULL
@@ -616,6 +618,39 @@ static Future<int> deleteCommande(int id) async {
     where: 'id = ?',
     whereArgs: [id],
   );
+}
+
+// Récupérer les commandes d'un utilisateur connecté ou d'un appareil anonyme,
+// avec le nombre d'articles de chaque commande
+static Future<List<Map<String, dynamic>>> getCommandesAvecDetails({
+  int? utilisateurId,
+  String? deviceId,
+}) async {
+  final db = await initDb();
+
+  String where;
+  List<dynamic> whereArgs;
+
+  if (utilisateurId != null) {
+    where = 'c.utilisateurId = ?';
+    whereArgs = [utilisateurId];
+  } else if (deviceId != null) {
+    where = 'c.deviceId = ?';
+    whereArgs = [deviceId];
+  } else {
+    throw Exception('deviceId ou utilisateurId requis');
+  }
+
+  return await db.rawQuery('''
+    SELECT
+      c.*,
+      COUNT(cp.id) as nombreArticles
+    FROM commandes c
+    LEFT JOIN commande_produits cp ON cp.commandeId = c.id
+    WHERE $where
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  ''', whereArgs);
 }
 
 // Générer un numéro de commande unique

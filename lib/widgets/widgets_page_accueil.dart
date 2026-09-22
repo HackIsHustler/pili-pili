@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:pili_pili/services/database_manager.dart';
-import 'package:pili_pili/services/session_manager.dart';
+import 'package:provider/provider.dart';
 import 'package:pili_pili/models/produit.dart';
-import 'package:pili_pili/models/produit_like.dart';
+import 'package:pili_pili/providers/produit_provider.dart';
+import 'package:pili_pili/providers/panier_provider.dart';
+import 'package:pili_pili/widgets/zone_de_message.dart';
 import 'package:pili_pili/style/style.dart';
 
 class CarrouselProduits extends StatelessWidget {
@@ -46,7 +47,6 @@ class CarrouselProduits extends StatelessWidget {
                             color: Colors.white,
                           ),
                         ),
-                  // Voile dégradé + nom du produit en bas
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -87,7 +87,7 @@ class CarrouselProduits extends StatelessWidget {
   }
 }
 
-class LesCategories extends StatelessWidget{
+class LesCategories extends StatelessWidget {
   final String nom;
   final bool selectionnee;
   final VoidCallback onTap;
@@ -96,27 +96,28 @@ class LesCategories extends StatelessWidget{
     required this.nom,
     this.selectionnee = false,
     required this.onTap,
-    });
+  });
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.all(8.0),
       child: ElevatedButton.icon(
-        onPressed: onTap, 
+        onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: selectionnee ? Colors.pink : Colors.white,
         ),
         icon: Icon(
           Icons.category,
-          color: selectionnee ? Colors.white : StyleApplication.coloriconInPage),
+          color: selectionnee ? Colors.white : StyleApplication.coloriconInPage,
+        ),
         label: Text(
           nom,
           style: TextStyle(
             color: selectionnee ? Colors.white : Colors.pink,
           ),
-          ),
         ),
+      ),
     );
   }
 }
@@ -148,145 +149,76 @@ class LesPlusPopulaires extends StatelessWidget {
   }
 }
 
-class _ProduitCard extends StatefulWidget {
+class _ProduitCard extends StatelessWidget {
   final Produit produit;
   const _ProduitCard({required this.produit});
 
   @override
-  State<_ProduitCard> createState() => _ProduitCardState();
-}
-
-class _ProduitCardState extends State<_ProduitCard> {
-  bool _isLiked = false;
-  bool _isLoadingLike = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _verifierLike();
-  }
-
-  Future<void> _verifierLike() async {
-    final produitId = widget.produit.id;
-    if (produitId == null) {
-      setState(() => _isLoadingLike = false);
-      return;
-    }
-
-    try {
-      final userId = await SessionManager.getUserId();
-      bool liked;
-
-      if (userId != null) {
-        liked = await DatabaseManager.utilisateurALike(
-          produitId: produitId,
-          utilisateurId: userId,
-        );
-      } else {
-        final deviceId = await SessionManager.getOrCreateDeviceId();
-        liked = await DatabaseManager.utilisateurALike(
-          produitId: produitId,
-          deviceId: deviceId,
-        );
-      }
-
-      if (mounted) {
-        setState(() {
-          _isLiked = liked;
-          _isLoadingLike = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingLike = false);
-    }
-  }
-
-  Future<void> _toggleLike() async {
-    final produitId = widget.produit.id;
-    if (produitId == null) return;
-
-    final ancienEtat = _isLiked;
-    setState(() => _isLiked = !_isLiked);
-
-    try {
-      final userId = await SessionManager.getUserId();
-      final deviceId =
-          userId == null ? await SessionManager.getOrCreateDeviceId() : null;
-
-      if (ancienEtat) {
-        await DatabaseManager.deleteProduitLike(
-          produitId: produitId,
-          utilisateurId: userId,
-          deviceId: deviceId,
-        );
-      } else {
-        await DatabaseManager.insertProduitLike(
-          ProduitLike(
-            produitId: produitId,
-            utilisateurId: userId,
-            deviceId: deviceId,
-            createdAt: DateTime.now(),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLiked = ancienEtat);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final produit = widget.produit;
+    final produitProvider = context.watch<ProduitProvider>();
+    final produitId = produit.id;
+
+    final bool likeConnu = produitId != null && produitProvider.estLikeConnu(produitId);
+    final bool isLiked = produitId != null && produitProvider.estLikeCharge(produitId);
 
     return Card(
       color: Colors.red,
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-           Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: _construireImage(produit.imageUrl),
-                  )
-                  ),
-                  const SizedBox(height: 6,),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(produit.nom),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _construireImage(produit.imageUrl),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('${produit.prix} fcfa'),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.add_shopping_cart, color: Colors.pink),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(produit.nom, style: const TextStyle(color: Colors.white)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('${produit.prix} fcfa', style: const TextStyle(color: Colors.white)),
+                    IconButton(
+                      onPressed: () {
+                        context.read<PanierProvider>().ajouterProduit(produit);
+                        SnackBarHelper.success(
+                          context, '${produit.nom} ajouté au panier');
+                          Duration(seconds: 1);
+                      },
+                      icon: const Icon(Icons.add_shopping_cart, color: Colors.pink),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           Positioned(
             top: 4,
             right: 4,
-            child: _isLoadingLike
+            child: !likeConnu
                 ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : GestureDetector(
-                    onTap: _toggleLike,
+                    onTap: () {
+                      if (produitId != null) {
+                        context.read<ProduitProvider>().toggleLike(produitId);
+                      }
+                    },
                     child: Icon(
-                      _isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: _isLiked ? Colors.white : Colors.white70,
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: isLiked ? Colors.white : Colors.white70,
                       size: 26,
                     ),
                   ),
@@ -295,10 +227,11 @@ class _ProduitCardState extends State<_ProduitCard> {
       ),
     );
   }
+
   Widget _construireImage(String imageUrl) {
     final file = File(imageUrl);
 
-    if (file.existsSync()){
+    if (file.existsSync()) {
       return Image.file(
         file,
         fit: BoxFit.cover,
@@ -306,19 +239,18 @@ class _ProduitCardState extends State<_ProduitCard> {
       );
     }
 
-    //fichier introuvable
     return Container(
       color: Colors.white24,
       width: double.infinity,
-      child: const Icon(Icons.image_not_supported, color: Colors.white, size: 40,),
+      child: const Icon(Icons.image_not_supported, color: Colors.white, size: 40),
     );
   }
 }
 
 //bottom navbar
-class BottomNavBar extends StatelessWidget{
+class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final Function(int) onTap;  
+  final Function(int) onTap;
   const BottomNavBar({super.key, required this.currentIndex, required this.onTap});
 
   @override
@@ -333,21 +265,21 @@ class BottomNavBar extends StatelessWidget{
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Accueil',
-          ),
-           BottomNavigationBarItem(
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.favorite),
           label: 'Favoris',
-          ),
-           BottomNavigationBarItem(
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.assignment),
           label: 'Commandes',
-          ),
-           BottomNavigationBarItem(
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.verified_user),
           label: 'Profil',
-          )
+        )
       ],
-      );
+    );
   }
 }
 

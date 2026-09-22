@@ -215,7 +215,7 @@ class _GestionAffectationsState extends State<GestionAffectations> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Affectations en cours",
-                        style: StyleApplication.sousTitre,
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 10),
