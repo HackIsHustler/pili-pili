@@ -223,7 +223,7 @@ class _GestionAffectationsState extends State<GestionAffectations> {
                     Expanded(
                       child: _affectations.isEmpty
                           ? const Center(
-                              child: Text("Aucune affectation en cours"),
+                              child: Text("Aucune affectation en cours", style: TextStyle(fontSize: 20, color: Colors.white)),
                             )
                           : ListView.builder(
                               itemCount: _affectations.length,

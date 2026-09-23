@@ -46,6 +46,7 @@ class PagePanier extends StatelessWidget {
                           nom: item.produit.nom,
                           prix: item.produit.prix.toInt(),
                           quantite: item.quantite,
+                          imageUrl: item.produit.imageUrl, //  ajouté
                           onIncrement: () => context.read<PanierProvider>().incrementerQuantite(index),
                           onDecrement: () => context.read<PanierProvider>().decrementerQuantite(index),
                           onDelete: () => context.read<PanierProvider>().supprimerProduit(index),

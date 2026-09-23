@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:pili_pili/models/categorie.dart';
 import 'package:pili_pili/models/produit.dart';
 import 'package:pili_pili/services/database_manager.dart';
@@ -27,6 +29,14 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
   bool _disponible = true;
   bool _isSubmitting = false;
   List<Categorie> _categories = [];
+
+  Future<String> _copierImagePermanente(File image) async {
+  final directoryPermanent = await getApplicationDocumentsDirectory();
+  final nomFichier = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
+  final nouveauChemin = path.join(directoryPermanent.path, nomFichier);
+  final nouveauFichier = await image.copy(nouveauChemin);
+  return nouveauFichier.path;
+}
 
   @override
   void initState() {
@@ -128,14 +138,19 @@ class _AjoutProduitPageState extends State<AjoutProduitPage> {
       return;
     }
 
-    //verifie si une image a ete selectionnee
-    String? imagePath;
-    if (_imageFile != null) {
-      imagePath = _imageFile!.path;
-    }
-
+    //verifie si une image a ete selectionne
     setState(() => _isSubmitting = true);
-
+    String? imagePath;
+    try {
+      imagePath = await _copierImagePermanente(_imageFile!);
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.error(context, "Erreur lors de la copie de l'image: $e");
+        setState(() => _isSubmitting = false);
+      }
+      return;
+    }
+    
     try {
       final produit = Produit(
         nom: nom,

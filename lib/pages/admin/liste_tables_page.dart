@@ -239,7 +239,7 @@ class _ListeTablesPageState extends State<ListeTablesPage> {
           : RefreshIndicator(
               onRefresh: _chargerTables,
               child: _tables.isEmpty
-                  ? const Center(child: Text("Aucune table enregistrée"))
+                  ? const Center(child: Text("Aucune table enregistrée", style: TextStyle(fontSize: 20, color: Colors.white)))
                   : ListView.builder(
                       padding: const EdgeInsets.all(16.0),
                       itemCount: _tables.length,

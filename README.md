@@ -29,6 +29,7 @@ ICI EST LE README.MD DE MON APPLICATION PILI-PILI
         image_picker: ^1.2.3
         uuid: ^4.6.0
         provider: ^6.1.5+1
+        path_provider
 4. INSTALLATION
     pour installer l'application, il faut dabord cloner le depot, se mettre sous la racine du projet et de lancer la commande: flutter run
 
