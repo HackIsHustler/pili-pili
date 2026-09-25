@@ -207,6 +207,7 @@ class _PageProfilState extends State<PageProfil> {
           items.add(ProfilItem(
             icon: Icons.kitchen,
             label: 'Commandes à préparer',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.cuisine),
           ));
           items.add(ProfilItem(
             icon: Icons.check_circle,

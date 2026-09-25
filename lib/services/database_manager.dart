@@ -97,6 +97,7 @@ class DatabaseManager {
         categorieId INTEGER NOT NULL,
         imageUrl TEXT NOT NULL,
         disponible INTEGER DEFAULT 1,
+        dureePreparation INTEGER NOT NULL DEFAULT 10,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (categorieId) REFERENCES categories(id) ON DELETE CASCADE
       )
@@ -115,6 +116,8 @@ class DatabaseManager {
         total REAL NOT NULL DEFAULT 0,
         adresseLivraison TEXT,
         modePaiement TEXT,
+        dateDebutPreparation DATETIME,
+        dureeEstimeeMinutes INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(id) ON DELETE SET NULL,
         FOREIGN KEY (tableId) REFERENCES tables(id) ON DELETE SET NULL
@@ -607,6 +610,36 @@ static Future<int> updateTotalCommande(int id, double nouveauTotal) async {
     {'total': nouveauTotal},
     where: 'id = ?',
     whereArgs: [id],
+  );
+}
+// Récupérer les commandes en_attente ET en_preparation, avec durée de préparation max par commande
+static Future<List<Map<String, dynamic>>> getCommandesCuisine() async {
+  final db = await initDb();
+  return await db.rawQuery('''
+    SELECT
+      c.*,
+      COALESCE(MAX(p.dureePreparation), 10) as dureeSuggereeMinutes
+    FROM commandes c
+    LEFT JOIN commande_produits cp ON cp.commandeId = c.id
+    LEFT JOIN produits p ON p.id = cp.produitId
+    WHERE c.statut IN ('en_attente', 'en_preparation')
+    GROUP BY c.id
+    ORDER BY c.created_at ASC
+  ''');
+}
+
+// Le cuisinier accepte une commande : lance la préparation
+static Future<int> demarrerPreparation(int commandeId, int dureeMinutes) async {
+  final db = await initDb();
+  return await db.update(
+    'commandes',
+    {
+      'statut': 'en_preparation',
+      'dateDebutPreparation': DateTime.now().toIso8601String(),
+      'dureeEstimeeMinutes': dureeMinutes,
+    },
+    where: 'id = ?',
+    whereArgs: [commandeId],
   );
 }
 

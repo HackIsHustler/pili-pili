@@ -93,7 +93,7 @@ class PanierItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('$quantite', style: StyleApplication.taillTextSimple),
+                Text('$quantite', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: onIncrement,

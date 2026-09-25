@@ -6,6 +6,7 @@ class Produit {
   final int categorieId;
   final String imageUrl;
   final bool disponible;
+  final int dureePreparation;
   final DateTime createdAt;
 
   int? nombreLikes;
@@ -18,6 +19,7 @@ class Produit {
     required this.categorieId,
     required this.imageUrl,
     this.disponible = true,
+    this.dureePreparation = 10,
     required this.createdAt,
     this.nombreLikes,
   });
@@ -30,7 +32,8 @@ class Produit {
       prix: map['prix'].toDouble(), 
       categorieId: map['categorieId'], 
       imageUrl: map['imageUrl'], 
-      disponible: map['diponible'] == 1,
+      disponible: map['disponible'] == 1,
+      dureePreparation: map['dureePreparation'] ?? 10,
       createdAt: DateTime.parse(map['created_at']),
       nombreLikes: map['nombreLikes'],
       );
@@ -45,6 +48,7 @@ class Produit {
       'categorieId': categorieId,
       'imageUrl': imageUrl,
       'disponible': disponible ? 1 : 0,
+      'dureePreparation': dureePreparation,
       'created_at': createdAt.toIso8601String(),
     };
   }

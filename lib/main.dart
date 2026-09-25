@@ -8,6 +8,7 @@ import 'package:pili_pili/pages/admin/page_admin.dart';
 import 'package:pili_pili/providers/categorie_provider.dart';
 import 'package:pili_pili/providers/produit_provider.dart';
 import 'package:pili_pili/providers/commande_provider.dart';
+import 'package:pili_pili/pages/page_cuisine.dart';
 import './widgets/widgets_page_accueil.dart';
 import 'pages/ma_page_accueil.dart';
 import './pages/page_favoris.dart';
@@ -19,23 +20,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await DatabaseManager.initDb();
-  try {
-    final db = await DatabaseManager.initDb();
-    final result = await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
-    print(" Tables dans la base :");
-    for (var table in result) {
-      print("  - ${table['name']}");
-    }
-    final users = await db.rawQuery('SELECT COUNT(*) as count FROM utilisateurs');
-    print("👤 Nombre d'utilisateurs : ${users.first['count']}");
-    final perso = await db.rawQuery('SELECT COUNT(*) as count FROM personnels');
-    print("👤 Nombre personnels : ${perso.first['count']}");
-    final prod = await db.rawQuery('SELECT COUNT(*) as count FROM produits');
-    print("👤 Nombre produits : ${prod.first['count']}");
-  } catch (e) {
-    print(" Erreur: $e");
-  }
-
   runApp(
     MultiProvider(
       providers: [
@@ -66,6 +50,7 @@ class MonAppli extends StatelessWidget {
         AppRoutes.loginRegister: (context) => const LoginRegisterPage(),
         AppRoutes.admin: (context) => const DashboardAdmin(),
         AppRoutes.utilisateur: (context) => const ListeUtilisateurs(),
+        AppRoutes.cuisine: (context) => const PageCuisine(),
       },
     );
   }

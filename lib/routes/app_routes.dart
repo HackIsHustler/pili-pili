@@ -8,4 +8,5 @@ class AppRoutes {
   static const loginRegister = "/connectregistre";
   static const admin = "/dashboard";
   static const utilisateur = "/utilisateur";
+  static const String cuisine = '/cuisine';
 }
