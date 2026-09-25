@@ -29,6 +29,7 @@ class _PageCuisineContenu extends StatelessWidget {
         title: const Text('Commandes à préparer', style: StyleApplication.titre),
         backgroundColor: Colors.pink,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -40,7 +41,7 @@ class _PageCuisineContenu extends StatelessWidget {
                   if (provider.commandesEnAttente.isEmpty && provider.commandesEnPreparation.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(child: Text("Aucune commande pour le moment")),
+                      child: Center(child: Text("Aucune commande pour le moment", style: TextStyle(fontSize: 18, color: Colors.white))),
                     ),
 
                   if (provider.commandesEnAttente.isNotEmpty) ...[
