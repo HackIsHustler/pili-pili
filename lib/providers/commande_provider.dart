@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pili_pili/controllers/commande_controller.dart';
 import 'package:pili_pili/models/panier_item_model.dart';
@@ -16,6 +17,18 @@ class CommandeProvider extends ChangeNotifier {
 
   String? _erreur;
   String? get erreur => _erreur;
+
+  //notification pontuelle: id de la commande qui vient de terminer
+  int? _dernierIdTermine;
+  int? get dernierIdTermine => _dernierIdTermine;
+  void consommerNotificationFin() => _dernierIdTermine = null;
+
+  final Set<int> _idsDejaSignales = {};
+  Timer? _timer;
+
+  CommandeProvider() {
+    _timer = Timer.periodic(const Duration(seconds:1), (_) => _tick());
+  }
 
   Future<void> chargerCommandes() async {
     _isLoading = true;
@@ -59,5 +72,42 @@ class CommandeProvider extends ChangeNotifier {
     _isSubmitting = false;
     notifyListeners();
     return numero;
+  }
+
+  void _tick(){
+    bool changement = false;
+
+    for (final commande in _commandes) {
+      if (commande['statut'] != 'en_preparation') continue;
+
+      final id = commande['id'];
+      final dateDebutStr = commande['dateDebutPreparation'];
+      final duree = commande['dureeEstimeeMinutes'] ;
+      
+      if (id == null || dateDebutStr == null || duree == null) continue;
+      if (_idsDejaSignales.contains(id)) continue;
+
+      final dateDebut = DateTime.parse(dateDebutStr);
+      final fin = dateDebut.add(Duration(minutes: duree as int ));
+
+      if (DateTime.now().isAfter(fin)){
+        _idsDejaSignales.add(id);
+        _dernierIdTermine = id;
+        _controller.marquerTerminee(id);
+        changement = true;
+      }
+    }
+
+    if (changement) {
+      chargerCommandes();
+    } else {
+      notifyListeners(); //rafraichir juste l'affichage des countdowns
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

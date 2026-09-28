@@ -9,24 +9,12 @@ class PageCuisine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CommandeCuisineProvider()..chargerCommandes(),
-      child: const _PageCuisineContenu(),
-    );
-  }
-}
-
-class _PageCuisineContenu extends StatelessWidget {
-  const _PageCuisineContenu();
-
-  @override
-  Widget build(BuildContext context) {
     final provider = context.watch<CommandeCuisineProvider>();
 
     return Scaffold(
       backgroundColor: StyleApplication.backgroundcolorPage,
       appBar: AppBar(
-        title: const Text('Commandes à préparer', style: StyleApplication.titre),
+        title: const Text('Commandes à préparer', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.pink,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -41,11 +29,11 @@ class _PageCuisineContenu extends StatelessWidget {
                   if (provider.commandesEnAttente.isEmpty && provider.commandesEnPreparation.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(child: Text("Aucune commande pour le moment", style: TextStyle(fontSize: 18, color: Colors.white))),
+                      child: Center(child: Text("Aucune commande pour le moment", style: TextStyle(fontSize: 16, color: Colors.white))),
                     ),
 
                   if (provider.commandesEnAttente.isNotEmpty) ...[
-                    const Text("En attente", style: StyleApplication.sousTitre),
+                    const Text("En attente", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 10),
                     ...provider.commandesEnAttente.map(
                       (c) => _CarteCommandeEnAttente(commande: c),
@@ -54,7 +42,7 @@ class _PageCuisineContenu extends StatelessWidget {
                   ],
 
                   if (provider.commandesEnPreparation.isNotEmpty) ...[
-                    const Text("En préparation", style: StyleApplication.sousTitre),
+                    const Text("En préparation", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 10),
                     ...provider.commandesEnPreparation.map(
                       (c) => _CarteCommandeEnPreparation(commande: c),

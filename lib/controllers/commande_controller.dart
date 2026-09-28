@@ -16,6 +16,10 @@ class CommandeController {
     }
   }
 
+  Future<void> marquerTerminee(int commandeId){
+    return DatabaseManager.updateStatutCommande(commandeId, "termine").then((_) => null);
+  }
+  
   Future<String> passerCommande({
     required List<PanierItemModel> items,
     required String type,

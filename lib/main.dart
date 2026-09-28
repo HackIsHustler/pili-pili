@@ -8,6 +8,7 @@ import 'package:pili_pili/pages/admin/page_admin.dart';
 import 'package:pili_pili/providers/categorie_provider.dart';
 import 'package:pili_pili/providers/produit_provider.dart';
 import 'package:pili_pili/providers/commande_provider.dart';
+import 'package:pili_pili/providers/commande_cuisine_provider.dart';
 import 'package:pili_pili/pages/page_cuisine.dart';
 import './widgets/widgets_page_accueil.dart';
 import 'pages/ma_page_accueil.dart';
@@ -27,6 +28,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProduitProvider()..chargerProduits()),
         ChangeNotifierProvider(create: (_) => CommandeProvider()..chargerCommandes()),
         ChangeNotifierProvider(create: (_) => PanierProvider()),
+        ChangeNotifierProvider(create: (_) => CommandeCuisineProvider()..chargerCommandes()),
       ],
       child: const MonAppli(),
     ),
