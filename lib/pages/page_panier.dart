@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pili_pili/providers/panier_provider.dart';
 import 'package:pili_pili/pages/page_paiement.dart';
 import '../widgets/widget_page_panier.dart';
+import 'package:pili_pili/widgets/zone_de_message.dart';
 import '../style/style.dart';
 
 class PagePanier extends StatelessWidget {
@@ -80,6 +81,35 @@ class PagePanier extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (panierProvider.necessiteTable) ...[
+                        const SizedBox(height: 14),
+                        const Text(
+                          "Numero de table",
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Veuillez entrer le numéro de votre table pour permettre au serveur de vous servir",
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<int>(
+                          initialValue: panierProvider.tableId,
+                          hint: const Text("Selectionner une table"),
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                          items: panierProvider.tables.map((table) {
+                            return DropdownMenuItem<int>(
+                              value: table.id,
+                              child: Text("Table ${table.numero}"),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            context.read<PanierProvider>().definirTableId(value);
+                          },
+                        )
+                      ],
 
                       if (panierProvider.typeCommande == "livraison") ...[
                         const SizedBox(height: 14),
@@ -127,14 +157,18 @@ class PagePanier extends StatelessWidget {
                     ],
                   ),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: panierProvider.peutPasserCommande 
+                    ? () {
                       Navigator.push(
                         context, 
                         MaterialPageRoute(builder: (context) => const PagePaiement()),
                         );
+                    }
+                    :() {
+                      SnackBarHelper.warning(context, "veuillez selectionner votre numero de tablepour passer la commande");
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink,
+                      backgroundColor: panierProvider.peutPasserCommande ? Colors.pink : Colors.grey,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

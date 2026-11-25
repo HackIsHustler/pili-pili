@@ -35,6 +35,7 @@ class _PagePaiementState extends State<PagePaiement> {
       items: panierProvider.items,
       type: panierProvider.typeCommande,
       adresseLivraison: panierProvider.adresseLivraison,
+      tableId: panierProvider.tableId,
       modePaiement: _modeSelectionne!,
     );
 

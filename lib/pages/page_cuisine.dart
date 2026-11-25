@@ -2,14 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pili_pili/providers/commande_cuisine_provider.dart';
 import 'package:pili_pili/models/commande.dart';
+import 'package:pili_pili/widgets/widget_details_commande_cuisine.dart';
+import 'package:pili_pili/widgets/zone_de_message.dart';
 import 'package:pili_pili/style/style.dart';
 
-class PageCuisine extends StatelessWidget {
+class PageCuisine extends StatefulWidget {
   const PageCuisine({super.key});
+
+  @override
+  State<PageCuisine> createState() => _PageCuisineState();
+}
+
+class _PageCuisineState extends State<PageCuisine> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<CommandeCuisineProvider>().chargerCommandes(silencieux: true);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CommandeCuisineProvider>();
+
+    if (provider.erreur != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        SnackBarHelper.error(context, provider.erreur!);
+        context.read<CommandeCuisineProvider>().effacerErreur();
+      });
+    }
 
     return Scaffold(
       backgroundColor: StyleApplication.backgroundcolorPage,
@@ -20,37 +45,51 @@ class PageCuisine extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : RefreshIndicator(
-              onRefresh: () => context.read<CommandeCuisineProvider>().chargerCommandes(),
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  if (provider.commandesEnAttente.isEmpty && provider.commandesEnPreparation.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(child: Text("Aucune commande pour le moment", style: TextStyle(fontSize: 16, color: Colors.white))),
-                    ),
-
-                  if (provider.commandesEnAttente.isNotEmpty) ...[
-                    const Text("En attente", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 10),
-                    ...provider.commandesEnAttente.map(
-                      (c) => _CarteCommandeEnAttente(commande: c),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  if (provider.commandesEnPreparation.isNotEmpty) ...[
-                    const Text("En préparation", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 10),
-                    ...provider.commandesEnPreparation.map(
-                      (c) => _CarteCommandeEnPreparation(commande: c),
-                    ),
-                  ],
-                ],
+        onRefresh: () => context
+            .read<CommandeCuisineProvider>()
+            .chargerCommandes(silencieux: true),
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            if (provider.commandesEnAttente.isEmpty &&
+                provider.commandesEnPreparation.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 60),
+                child: Center(
+                  child: Text(
+                    "Aucune commande pour le moment",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
               ),
-            ),
+
+            if (provider.commandesEnAttente.isNotEmpty) ...[
+              const Text(
+                "En attente",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 10),
+              ...provider.commandesEnAttente.map(
+                    (c) => _CarteCommandeEnAttente(commande: c),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            if (provider.commandesEnPreparation.isNotEmpty) ...[
+              const Text(
+                "En préparation",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 10),
+              ...provider.commandesEnPreparation.map(
+                    (c) => _CarteCommandeEnPreparation(commande: c),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -58,6 +97,13 @@ class PageCuisine extends StatelessWidget {
 class _CarteCommandeEnAttente extends StatelessWidget {
   final Commande commande;
   const _CarteCommandeEnAttente({required this.commande});
+
+  String _ilYa(DateTime date) {
+    final d = DateTime.now().difference(date);
+    if (d.inMinutes < 1) return "Reçue à l'instant";
+    if (d.inMinutes < 60) return "Reçue il y a ${d.inMinutes} min";
+    return "Reçue il y a ${d.inHours} h ${d.inMinutes % 60} min";
+  }
 
   void _ouvrirDialogueAcceptation(BuildContext context) {
     final provider = context.read<CommandeCuisineProvider>();
@@ -82,7 +128,8 @@ class _CarteCommandeEnAttente extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Accepter la commande #${commande.numeroCommande}", style: StyleApplication.sousTitre),
+              Text("Accepter la commande #${commande.numeroCommande}",
+                  style: StyleApplication.sousTitre),
               const SizedBox(height: 16),
               TextField(
                 controller: controller,
@@ -101,9 +148,12 @@ class _CarteCommandeEnAttente extends StatelessWidget {
                     final valeur = int.tryParse(controller.text.trim());
                     if (valeur == null || valeur <= 0) return;
                     Navigator.pop(context);
-                    context.read<CommandeCuisineProvider>().accepterCommande(commande.id!, valeur);
+                    context
+                        .read<CommandeCuisineProvider>()
+                        .accepterCommande(commande.id!, valeur);
                   },
-                  child: const Text("Lancer la préparation", style: TextStyle(color: Colors.white)),
+                  child: const Text("Lancer la préparation",
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
             ],
@@ -115,16 +165,52 @@ class _CarteCommandeEnAttente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<CommandeCuisineProvider>();
+    final id = commande.id!;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: const Icon(Icons.receipt_long, color: Colors.pink),
-        title: Text("Commande #${commande.numeroCommande}"),
-        subtitle: Text("${commande.type} · ${commande.total.toInt()} fcfa"),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-          onPressed: () => _ouvrirDialogueAcceptation(context),
-          child: const Text("Accepter", style: TextStyle(color: Colors.white)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  "Commande #${commande.numeroCommande}",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const Spacer(),
+                Text(
+                  _ilYa(commande.createdAt),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            DetailsCommandeCuisine(
+              type: commande.type,
+              numeroTable: provider.numeroTable(id),
+              lignes: provider.lignesPour(id),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                onPressed: () => _ouvrirDialogueAcceptation(context),
+                icon: const Icon(Icons.local_fire_department, size: 18, color: Colors.white),
+                label: const Text(
+                  "Accepter",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -143,23 +229,42 @@ class _CarteCommandeEnPreparation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<CommandeCuisineProvider>();
+    final id = commande.id!;
     final restant = commande.tempsRestant ?? Duration.zero;
     final presque = restant.inSeconds <= 30;
+    final couleur = presque ? Colors.orange : Colors.pink;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       color: presque ? Colors.orange[50] : null,
-      child: ListTile(
-        leading: Icon(Icons.local_fire_department, color: presque ? Colors.orange : Colors.pink),
-        title: Text("Commande #${commande.numeroCommande}"),
-        subtitle: Text("${commande.type} · ${commande.total.toInt()} fcfa"),
-        trailing: Text(
-          _formatDuree(restant),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: presque ? Colors.orange : Colors.pink,
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.local_fire_department, color: couleur),
+                const SizedBox(width: 8),
+                Text(
+                  "Commande #${commande.numeroCommande}",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const Spacer(),
+                Text(
+                  _formatDuree(restant),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: couleur),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            DetailsCommandeCuisine(
+              type: commande.type,
+              numeroTable: provider.numeroTable(id),
+              lignes: provider.lignesPour(id),
+            ),
+          ],
         ),
       ),
     );

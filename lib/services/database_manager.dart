@@ -111,6 +111,7 @@ class DatabaseManager {
         utilisateurId INTEGER,
         deviceId TEXT,
         tableId INTEGER,
+        livreurId INTEGER,
         type TEXT NOT NULL,
         statut TEXT NOT NULL,
         total REAL NOT NULL DEFAULT 0,
@@ -121,6 +122,7 @@ class DatabaseManager {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(id) ON DELETE SET NULL,
         FOREIGN KEY (tableId) REFERENCES tables(id) ON DELETE SET NULL
+        FOREIGN KEY (livreurId) REFERENCES utilisateurs(id) ON DELETE SET NULL
       )
     ''');
 
@@ -520,6 +522,16 @@ static Future<int> updateStatutTable(int tableId, String statut) async {
   );
  }
 
+ //compter le nombre de notifications non lues pour un utilisateur
+ static Future<int> countNotificationsNonLues(int utilisateurId) async {
+  final db = await initDb();
+  final result = await db.rawQuery(
+    'SELECT COUNT(*) as total FROM notifications WHERE utilisateurId = ? AND lu = 0',
+    [utilisateurId],
+  );
+  return Sqflite.firstIntValue(result) ?? 0;
+ }
+
  //supprimer toutes les notifications lu les plus anciennes
  static Future<int> deleteAllNotificationsLues() async {
   final db = await initDb();
@@ -618,8 +630,10 @@ static Future<List<Map<String, dynamic>>> getCommandesCuisine() async {
   return await db.rawQuery('''
     SELECT
       c.*,
+      t.numero as tableNumero,
       COALESCE(MAX(p.dureePreparation), 10) as dureeSuggereeMinutes
     FROM commandes c
+    LEFT JOIN tables t ON t.id = c.tableId
     LEFT JOIN commande_produits cp ON cp.commandeId = c.id
     LEFT JOIN produits p ON p.id = cp.produitId
     WHERE c.statut IN ('en_attente', 'en_preparation')
@@ -627,6 +641,58 @@ static Future<List<Map<String, dynamic>>> getCommandesCuisine() async {
     ORDER BY c.created_at ASC
   ''');
 }
+// produits et quantites de plusieurs commandes
+  static Future<List<Map<String, dynamic>>> getLignesCommandes(List<int> commandeIds) async {
+    if (commandeIds.isEmpty) return [];
+    final db = await initDb();
+    final placeholders = List.filled(commandeIds.length, '?').join(',');
+    return await db.rawQuery('''
+    SELECT cp.commandeId, cp.quantite, p.nom as produitNom
+    FROM commande_produits cp
+    INNER JOIN produits p ON p.id = cp.produitId
+    WHERE cp.commandeId IN ($placeholders)
+    ORDER BY cp.commandeId, p.nom
+    ''', commandeIds);
+  }
+
+//   commande dont la preparation est finis
+  static Future<List<Map<String, dynamic>>> getCommandeCuisineTerminees({
+    int limite = 20,
+    String? curseurDate,
+    int? curseurId,
+}) async {
+    final db = await initDb();
+    final args = <Object?>[];
+    var condition = '';
+    if (curseurDate != null && curseurId != null){
+      condition = '''
+      AND (c.dateDebutPreparation < ?
+      OR (c.dateDebutPreparation = ? AND c.id < ?))
+      ''';
+      args.addAll([curseurDate, curseurDate, curseurId]);
+    }
+    args.add(limite);
+
+    return await db.rawQuery('''
+    SELECT c.*, t.numero as tableNumero 
+    FROM commandes c
+    LEFT JOIN tables t ON t.id = c.tableId
+    WHERE c.dateDebutPreparation IS NOT NULL
+    AND c.statut IN ('termine', 'en_livraison', 'livre')
+    $condition
+    ORDER BY c.dateDebutPreparation DESC, c.id DESC
+    LIMIT ?
+    ''', args);
+  }
+  static Future<int> countCommandesCuisineTerminees() async {
+    final db = await initDb();
+    final result = await db.rawQuery('''
+    SELECT COUNT(*) as total FROM commandes
+    WHERE dateDebutPreparation IS NOT NULL
+      AND statut IN ('termine', 'en_livraison', 'livre')
+  ''');
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
 
 // Le cuisinier accepte une commande : lance la préparation
 static Future<int> demarrerPreparation(int commandeId, int dureeMinutes) async {
@@ -658,21 +724,30 @@ static Future<int> deleteCommande(int id) async {
 static Future<List<Map<String, dynamic>>> getCommandesAvecDetails({
   int? utilisateurId,
   String? deviceId,
+  int limite = 20,
+  String? curseurDate,
+  int? curseurId,
 }) async {
   final db = await initDb();
 
   String where;
-  List<dynamic> whereArgs;
+  final args = <Object?>[];
 
   if (utilisateurId != null) {
     where = 'c.utilisateurId = ?';
-    whereArgs = [utilisateurId];
+    args.add(utilisateurId);
   } else if (deviceId != null) {
     where = 'c.deviceId = ?';
-    whereArgs = [deviceId];
+    args.add(deviceId);
   } else {
     throw Exception('deviceId ou utilisateurId requis');
   }
+
+  if (curseurDate != null && curseurId != null) {
+    where += ' AND (c.created_at < ? OR (c.created_at = ? AND c.id < ?))';
+    args.addAll([curseurDate, curseurDate, curseurId]);
+  }
+  args.add(limite);
 
   return await db.rawQuery('''
     SELECT
@@ -682,8 +757,9 @@ static Future<List<Map<String, dynamic>>> getCommandesAvecDetails({
     LEFT JOIN commande_produits cp ON cp.commandeId = c.id
     WHERE $where
     GROUP BY c.id
-    ORDER BY c.created_at DESC
-  ''', whereArgs);
+    ORDER BY c.created_at DESC, c.id DESC
+    LIMIT ?
+  ''', args);
 }
 
 // Générer un numéro de commande unique
@@ -1053,6 +1129,35 @@ static Future<int> deleteAffectation(int id) async {
   );
 }
 
+//recuperer tous les livreurs actifs
+static Future<List<Map<String, dynamic>>> getAllLivreursActifs() async {
+  final db = await initDb();
+  return await db.rawQuery('''
+    SELECT 
+      p.*,
+      u.nom,
+      u.prenom,
+      u.email,
+      u.telephone
+    FROM personnels p
+    INNER JOIN utilisateurs u ON p.utilisateurId = u.id
+    WHERE p.role = 'livreur' AND p.actif = 1
+    ORDER BY p.created_at DESC
+  ''');
+}
+
+//tentative d'acceptation d'une livraison operation atomique anti-course
+// ne reussit que si personne d'autre n'a deja pris la commande entre-temps
+static Future<bool> accepterLivraison(int commandeId, int livreurId) async {
+  final db = await initDb();
+  final nbLignesModifiees = await db.update(
+    'commandes', 
+    {'livreurId': livreurId}, 
+    where: 'id = ? AND livreurId IS NULL', 
+    whereArgs: [commandeId]);
+    return nbLignesModifiees > 0; // true si la commande a été acceptée, false sinon
+}
+
 // ========== Statistiques pour le Dashboard ==========
 
 // Compter les commandes
@@ -1085,4 +1190,92 @@ static Future<int> countPersonnels() async {
   return Sqflite.firstIntValue(result) ?? 0;
 }
 
+//commandes prise par un livreur et pas encore livrees avec les infos clients
+static Future<List<Map<String, dynamic>>> getCommandesALivrer(int livreurId) async {
+    final db = await initDb();
+    return await db.rawQuery('''
+    SELECT
+    c.*,
+    u.nom as clientNom,
+    u.prenom as clientPrenom,
+    u.telephone as clientTelephone,
+    COUNT(cp.id) as nombreArticles
+    FROM commandes c
+    LEFT JOIN utilisateurs u ON u.id = c.utilisateurId
+    LEFT JOIN commande_produits cp ON cp.commandeId = c.id
+    WHERE c.livreurId = ?
+    AND c.statut NOT IN ('livre', 'annule')
+    GROUP BY c.id
+    ORDER BY c.created_at ASC
+    ''', [livreurId]);
+}
+
+//le livreur ne livre que seulement si la cuisine est terminer
+static Future<bool> demarrerLivraison(int commandeId, int livreurId) async {
+    final db = await initDb();
+    final nb = await db.update('commandes', {'statut': 'en_livraison'},
+      where: "id = ? AND livreurId = ? AND statut = 'termine'",
+      whereArgs: [commandeId, livreurId],
+    );
+    return nb > 0;
+}
+
+//le livreur confirme la livraison: possible seulement si elle est en cours
+static Future<bool> marquerCommandeLivree(int commandeId, int livreurId) async {
+    final db = await initDb();
+    final nb = await db.update('commandes', {'statut': 'livre'},
+      where: "id = ? AND livreurId = ? AND statut = 'en_livraison'",
+      whereArgs: [commandeId, livreurId],
+    );
+    return nb > 0;
+}
+
+// Livraisons terminées par un livreur, de la plus récente à la plus ancienne
+  static Future<List<Map<String, dynamic>>> getHistoriqueLivraisons(int livreurId,{
+    int limite = 20,
+    String? curseurDate,
+    int? curseurId,
+  }) async {
+    final db = await initDb();
+    final args = <Object?>[livreurId];
+    var condition = '';
+
+    if (curseurDate != null && curseurId != null){
+      condition = 'AND (c.created_at < ? OR (c.created_at = ? AND c.id < ?))';
+      args.addAll([curseurDate, curseurDate, curseurId]);
+    }
+    args.add(limite);
+
+    return await db.rawQuery('''
+    SELECT
+      c.*,
+      u.nom as clientNom,
+      u.prenom as clientPrenom,
+      COUNT(cp.id) as nombreArticles
+    FROM commandes c
+    LEFT JOIN utilisateurs u ON u.id = c.utilisateurId
+    LEFT JOIN commande_produits cp ON cp.commandeId = c.id
+    WHERE c.livreurId = ? AND c.statut = 'livre'
+    $condition
+    GROUP BY c.id
+    ORDER BY c.created_at DESC, c.id DESC
+    LIMIT ?
+  ''', args);
+  }
+
+  // nombres de livraisons et somme livree, calcule r sur tout lhistorique
+static Future<Map<String, int>> getStatsHistoriqueLivraisons(int livreurId) async{
+    final db = await initDb();
+    final result = await db.rawQuery('''
+    SELECT COUNT(*) as nombre, COALESCE(SUM(total), 0) as somme 
+    FROM commandes
+    WHERE livreurId = ? AND statut = 'livre'
+    ''', [livreurId]);
+
+    final ligne = result.first;
+    return {
+      'nombre' : (ligne['nombre'] as num).toInt(),
+      'somme' : (ligne['somme'] as num).toInt(),
+    };
+}
 }

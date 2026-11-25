@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pili_pili/pages/page_commande_a_livrer.dart';
 import 'package:pili_pili/providers/panier_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pili_pili/pages/admin/gestion_utilisateurs.dart';
@@ -9,6 +10,11 @@ import 'package:pili_pili/providers/categorie_provider.dart';
 import 'package:pili_pili/providers/produit_provider.dart';
 import 'package:pili_pili/providers/commande_provider.dart';
 import 'package:pili_pili/providers/commande_cuisine_provider.dart';
+import 'package:pili_pili/providers/notification_provider.dart';
+import 'package:pili_pili/pages/page_commande_a_livrer.dart';
+import 'package:pili_pili/providers/commande_livreur_provider.dart';
+import 'package:pili_pili/pages/page_historique_livraisons.dart';
+import 'package:pili_pili/pages/page_commandes_terminees.dart';
 import 'package:pili_pili/pages/page_cuisine.dart';
 import './widgets/widgets_page_accueil.dart';
 import 'pages/ma_page_accueil.dart';
@@ -29,6 +35,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CommandeProvider()..chargerCommandes()),
         ChangeNotifierProvider(create: (_) => PanierProvider()),
         ChangeNotifierProvider(create: (_) => CommandeCuisineProvider()..chargerCommandes()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()..chargerNotifications()),
+        ChangeNotifierProvider(create: (_) => CommandeLivreurProvider()..chargerCommandes()),
       ],
       child: const MonAppli(),
     ),
@@ -40,6 +48,12 @@ class MonAppli extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    //a enlever apres qaund onva integrer supabase 
+    context.read<CommandeCuisineProvider>().lierCommandeProviderClient(context.read<CommandeProvider>());
+
+    context.read<CommandeProvider>().lierNotificationProvider(context.read<NotificationProvider>());
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'pili-pili',
@@ -53,6 +67,9 @@ class MonAppli extends StatelessWidget {
         AppRoutes.admin: (context) => const DashboardAdmin(),
         AppRoutes.utilisateur: (context) => const ListeUtilisateurs(),
         AppRoutes.cuisine: (context) => const PageCuisine(),
+        AppRoutes.commandeAlivrer: (context) => const PageCommandesALivrer(),
+        AppRoutes.historiqueLivraisons: (context) => const PageHistoriqueLivraisons(),
+        AppRoutes.commandesTerminees: (context) => const PageCommandesTerminees(),
       },
     );
   }

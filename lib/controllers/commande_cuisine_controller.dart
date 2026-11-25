@@ -14,4 +14,23 @@ class CommandeCuisineController {
     return DatabaseManager.updateStatutCommande(commandeId, 'termine')
         .then((_) => null);
   }
+
+  Future<List<Map<String, dynamic>>> chargerLignes(List<int> commandeIds) {
+    return DatabaseManager.getLignesCommandes(commandeIds);
+  }
+
+  Future<List<Map<String, dynamic>>> chargerTerminees({
+    int limite = 20,
+    String? curseurDate,
+    int? curseurId,
+}){
+    return DatabaseManager.getCommandeCuisineTerminees(
+      limite: limite,
+      curseurDate: curseurDate,
+      curseurId: curseurId,
+    );
+  }
+  Future<int> compterTerminees() {
+    return DatabaseManager.countCommandesCuisineTerminees();
+  }
 }

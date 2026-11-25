@@ -27,6 +27,8 @@ class CommandeItem extends StatelessWidget {
       case 'termine':
       case 'livre':
         return Colors.green;
+      case 'en_livraison':
+        return Colors.blue;
       case 'en_preparation':
       case 'en_attente':
         return Colors.orange;
@@ -45,6 +47,8 @@ class CommandeItem extends StatelessWidget {
         return 'En préparation';
       case 'termine':
         return 'Terminée';
+      case 'en_livraison':
+        return 'En livraison';
       case 'annule':
         return 'Annulée';
       case 'livre':

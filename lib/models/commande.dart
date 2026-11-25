@@ -4,6 +4,7 @@ class Commande {
   final int? utilisateurId;
   final String? deviceId;
   final int? tableId;
+  final int? livreurId;
   final String type; // "sur_place", "livraison", "a_emporter"
   final String statut; // "en_attente", "en_preparation", "termine", "annule", "livre"
   final double total;
@@ -19,6 +20,7 @@ class Commande {
     this.utilisateurId,
     this.deviceId,
     this.tableId,
+    this.livreurId,
     required this.type,
     required this.statut,
     required this.total,
@@ -36,6 +38,7 @@ class Commande {
       utilisateurId: map['utilisateurId'],
       deviceId: map['deviceId'],
       tableId: map['tableId'],
+      livreurId: map['livreurId'],
       type: map['type'],
       statut: map['statut'],
       total: map['total'].toDouble(),
@@ -54,6 +57,7 @@ class Commande {
       'utilisateurId': utilisateurId,
       'deviceId': deviceId,
       'tableId': tableId,
+      'livreurId': livreurId,
       'type': type,
       'statut': statut,
       'total': total,

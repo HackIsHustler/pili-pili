@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pili_pili/style/style.dart';
+import 'package:pili_pili/utils/session_refresh.dart';
 import 'package:pili_pili/widgets/champ_de_saisie.dart';
 import 'package:pili_pili/services/database_manager.dart';
 import 'package:pili_pili/services/session_manager.dart';
@@ -78,6 +79,7 @@ class _LoginRegisterPageState extends State<LoginRegisterPage> {
 
       //  Connexion réussie
       if(mounted){
+          await rechargerDonneesUtilisateur(context);
           SnackBarHelper.success(context," Connexion reuissie  !");
         }
 
@@ -145,7 +147,7 @@ class _LoginRegisterPageState extends State<LoginRegisterPage> {
       final user = Utilisateur(
         nom: nom,
         prenom: prenom,
-        email: email,
+        email: email.toLowerCase(),
         motDePasse: password,
         telephone: telephone,
         createdAt: DateTime.now(),

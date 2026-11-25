@@ -81,6 +81,17 @@ class SessionManager {
     };
   }
 
+  // Met à jour les infos affichées après une modification de profil (le rôle reste inchangé)
+  static Future<void> updateUserInfos({
+    required String email,
+    required String nom,
+    required String prenom,
+  }) async {
+    await _storage.write(key: _keyUserEmail, value: email);
+    await _storage.write(key: _keyUserNom, value: nom);
+    await _storage.write(key: _keyUserPrenom, value: prenom);
+  }
+
   //  Fermer la session (déconnexion)
   static Future<void> endSession() async {
     await _storage.delete(key: _keyUserId);

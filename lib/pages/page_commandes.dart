@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:pili_pili/models/commande.dart';
 import 'package:provider/provider.dart';
 import 'package:pili_pili/providers/commande_provider.dart';
 import 'package:pili_pili/widgets/zone_de_message.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
 import './../widgets/widget_page_commandes.dart';
+import 'package:pili_pili/widgets/chargeur_de_suite.dart';
 import './../style/style.dart';
 
 class PageCommandes extends StatefulWidget {
@@ -39,10 +41,13 @@ class _PageCommandesState extends State<PageCommandes> {
   @override
   Widget build(BuildContext context) {
     final commandeProvider = context.watch<CommandeProvider>();
+    final erreur = commandeProvider.erreur;
 
-    if (commandeProvider.erreur != null) {
+    if (erreur != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        SnackBarHelper.error(context, commandeProvider.erreur!);
+        if (!mounted) return;
+        SnackBarHelper.error(context, erreur);
+        context.read<CommandeProvider>().effacerErreur();
       });
     }
 
@@ -88,8 +93,13 @@ class _PageCommandesState extends State<PageCommandes> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: commandeProvider.commandes.length,
+                  itemCount: commandeProvider.commandes.length +
+                      (commandeProvider.resteCommandes ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (index >= commandeProvider.commandes.length) {
+                      return ChargeurDeSuite(
+                          surAffichage: () => context.read<CommandeProvider>().chargerPlusCommandes());
+                    }
                     final commande = commandeProvider.commandes[index];
                     final date = DateTime.parse(commande['created_at']);
 

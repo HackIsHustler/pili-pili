@@ -1,13 +1,23 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pili_pili/controllers/commande_controller.dart';
+import 'package:pili_pili/providers/notification_provider.dart';
 import 'package:pili_pili/models/panier_item_model.dart';
 
 class CommandeProvider extends ChangeNotifier {
   final CommandeController _controller = CommandeController();
+  static const int _taillePage = 20;
 
   List<Map<String, dynamic>> _commandes = [];
   List<Map<String, dynamic>> get commandes => _commandes;
+
+  bool _resteCommandes = false;
+  bool get resteCommandes => _resteCommandes;
+
+  bool _isLoadingPlus = false;
+
+  String? _curseurDate;
+  int? _curseurId;
 
   bool _isLoading = true;
   bool get isLoading => _isLoading;
@@ -17,6 +27,42 @@ class CommandeProvider extends ChangeNotifier {
 
   String? _erreur;
   String? get erreur => _erreur;
+
+  void effacerErreur() => _erreur = null;
+
+  void _memoriserCurseur(List<Map<String, dynamic>> maps) {
+    if (maps.isEmpty) return;
+    _curseurDate = maps.last['created_at'] as String?;
+    _curseurId = maps.last['id'] as int?;
+  }
+
+  //page suivante, appelee par le chargeur de suite
+  Future<void> chargerPlusCommandes() async {
+    if (_isLoadingPlus || !_resteCommandes || _curseurDate == null) return;
+
+    _isLoadingPlus = true;
+
+    try {
+      final maps = await _controller.chargerCommandes(
+        limite: _taillePage,
+        curseurDate: _curseurDate,
+        curseurId: _curseurId,
+      );
+      _commandes = [..._commandes, ...maps];
+      _resteCommandes = maps.length >= _taillePage;
+      _memoriserCurseur(maps);
+    } catch (e){
+      _resteCommandes = false;
+      _erreur = "Erreur: $e";
+    }
+    _isLoadingPlus = false;
+    notifyListeners();
+  }
+
+  NotificationProvider? _notificationProvider;
+  void lierNotificationProvider(NotificationProvider provider) {
+    _notificationProvider = provider;
+  }
 
   //notification pontuelle: id de la commande qui vient de terminer
   int? _dernierIdTermine;
@@ -30,13 +76,22 @@ class CommandeProvider extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds:1), (_) => _tick());
   }
 
-  Future<void> chargerCommandes() async {
-    _isLoading = true;
-    _erreur = null;
-    notifyListeners();
+  Future<void> chargerCommandes({bool silencieux = false}) async {
+   if (!silencieux) {
+     _isLoading = true;
+     _erreur = null;
+     notifyListeners();
+   }
 
     try {
-      _commandes = await _controller.chargerCommandes();
+     final limite = (silencieux && _commandes.length > _taillePage)
+     ? _commandes.length
+     : _taillePage;
+
+     final maps = await _controller.chargerCommandes(limite: limite);
+      _commandes = maps;
+      _resteCommandes = maps.length >= limite;
+      _memoriserCurseur(maps);
     } catch (e) {
       _erreur = "Erreur: $e";
     }
@@ -50,6 +105,7 @@ class CommandeProvider extends ChangeNotifier {
     required List<PanierItemModel> items,
     required String type,
     String? adresseLivraison,
+    int? tableId,
     required String modePaiement,
   }) async {
     _isSubmitting = true;
@@ -62,9 +118,11 @@ class CommandeProvider extends ChangeNotifier {
         items: items,
         type: type,
         adresseLivraison: adresseLivraison,
+        tableId: tableId,
         modePaiement: modePaiement,
       );
-      await chargerCommandes(); // rafraîchit la liste pour PageCommandes
+      await chargerCommandes(silencieux: true); // rafraîchit la liste pour PageCommandes
+      _notificationProvider?.chargerNotifications(); // rafraîchit la liste pour PageNotifications
     } catch (e) {
       _erreur = "Erreur: $e";
     }
@@ -74,34 +132,45 @@ class CommandeProvider extends ChangeNotifier {
     return numero;
   }
 
-  void _tick(){
-    bool changement = false;
+  void _tick() {
+    final expirees = <int>[];
 
     for (final commande in _commandes) {
       if (commande['statut'] != 'en_preparation') continue;
 
       final id = commande['id'];
       final dateDebutStr = commande['dateDebutPreparation'];
-      final duree = commande['dureeEstimeeMinutes'] ;
-      
+      final duree = commande['dureeEstimeeMinutes'];
+
       if (id == null || dateDebutStr == null || duree == null) continue;
       if (_idsDejaSignales.contains(id)) continue;
 
-      final dateDebut = DateTime.parse(dateDebutStr);
-      final fin = dateDebut.add(Duration(minutes: duree as int ));
+      final fin = DateTime.parse(dateDebutStr).add(Duration(minutes: duree as int));
 
-      if (DateTime.now().isAfter(fin)){
+      if (DateTime.now().isAfter(fin)) {
         _idsDejaSignales.add(id);
-        _dernierIdTermine = id;
-        _controller.marquerTerminee(id);
-        changement = true;
+        expirees.add(id);
       }
     }
 
-    if (changement) {
-      chargerCommandes();
-    } else {
-      notifyListeners(); //rafraichir juste l'affichage des countdowns
+    if (expirees.isEmpty) {
+      notifyListeners(); // rafraîchit seulement l'affichage des comptes à rebours
+      return;
+    }
+
+    _dernierIdTermine = expirees.last;
+    _terminerExpirees(expirees);
+  }
+
+  Future<void> _terminerExpirees(List<int> ids) async {
+    try {
+      for (final id in ids) {
+        await _controller.marquerTerminee(id); // on attend la base avant de relire
+      }
+      await chargerCommandes(silencieux: true);
+    } catch (e) {
+      _erreur = "Erreur: $e";
+      notifyListeners();
     }
   }
 

@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:pili_pili/utils/session_refresh.dart';
+import 'package:provider/provider.dart';
 import 'package:pili_pili/routes/app_routes.dart';
 import 'package:pili_pili/widgets/widget_confirmation_dialogue.dart';
 import 'package:pili_pili/services/session_manager.dart';
+import 'package:pili_pili/providers/notification_provider.dart';
+import 'package:pili_pili/pages/page_notifications.dart';
+import 'package:pili_pili/widgets/widget_modifier_profil.dart';
+import 'package:pili_pili/pages/page_aide.dart';
+import 'package:pili_pili/widgets/zone_de_message.dart';
+import 'package:pili_pili/providers/commande_cuisine_provider.dart';
 import '../widgets/widget_page_profil.dart';
 import '../style/style.dart';
 
@@ -66,6 +74,9 @@ class _PageProfilState extends State<PageProfil> {
       confirmColor: Colors.red,
       onConfirm: () async {
         await SessionManager.endSession();
+        if (context.mounted){
+          await rechargerDonneesUtilisateur(context);
+        }
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, AppRoutes.loginRegister);
         }
@@ -159,6 +170,13 @@ class _PageProfilState extends State<PageProfil> {
     items.add(ProfilItem(
       icon: Icons.person_outline,
       label: 'Modifier le profil',
+      onTap: (){
+        if (!_isLoggedIn){
+          SnackBarHelper.info(context, "Connectez-vous pour modifier votre profil");
+          return;
+        }
+        afficherModifierProfil(context, onSucces: _chargerInfos);
+      },
     ));
 
     // 2. Menu selon le rôle
@@ -203,15 +221,20 @@ class _PageProfilState extends State<PageProfil> {
           break;
 
         case 'cuisinier':
+          final nbEnAttente = context.select<CommandeCuisineProvider, int>( (p) => p.commandesEnAttente.length);
           items.add(const Divider());
           items.add(ProfilItem(
             icon: Icons.kitchen,
             label: 'Commandes à préparer',
+            badgeCount: nbEnAttente,
             onTap: () => Navigator.pushNamed(context, AppRoutes.cuisine),
           ));
           items.add(ProfilItem(
             icon: Icons.check_circle,
             label: 'Commandes terminées',
+            onTap: (){
+              Navigator.pushNamed(context, AppRoutes.commandesTerminees);
+            },
           ));
           break;
 
@@ -220,10 +243,16 @@ class _PageProfilState extends State<PageProfil> {
           items.add(ProfilItem(
             icon: Icons.delivery_dining,
             label: 'Commandes à livrer',
+            onTap: (){
+              Navigator.pushNamed(context, AppRoutes.commandeAlivrer);
+            },
           ));
           items.add(ProfilItem(
             icon: Icons.history,
             label: 'Historique des livraisons',
+            onTap: (){
+              Navigator.pushNamed(context, AppRoutes.historiqueLivraisons);
+            },
           ));
           break;
 
@@ -267,13 +296,29 @@ class _PageProfilState extends State<PageProfil> {
 
     // 3. Items communs en bas
     items.add(const Divider(height: 30));
+      final notificationProvider = context.watch<NotificationProvider>();
     items.add(ProfilItem(
       icon: Icons.notifications_outlined,
       label: 'Notifications',
+      badgeCount: notificationProvider.nonLues,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PageNotifications()),
+        );
+      },
     ));
     items.add(ProfilItem(
       icon: Icons.help_outline,
       label: 'Aide',
+      onTap: (){
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => PageAide(role: _isLoggedIn ? _role : 'client'),
+            ),
+        );
+      }
     ));
 
     // 4. Déconnexion (si connecté)
